@@ -4,7 +4,6 @@ import SwiftUI
 
 @testable import Introspect
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 enum TestUtils {
     enum Constants {
         static let timeout: TimeInterval = 3
@@ -33,7 +32,6 @@ enum TestUtils {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 private struct NavigationTestView: View {
     let spy: () -> Void
     var body: some View {
@@ -49,7 +47,6 @@ private struct NavigationTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 private struct SplitNavigationTestView: View {
     let spy: () -> Void
     var body: some View {
@@ -65,7 +62,6 @@ private struct SplitNavigationTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 private struct ViewControllerTestView: View {
     let spy: () -> Void
     var body: some View {
@@ -80,7 +76,6 @@ private struct ViewControllerTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 private struct NavigationRootTestView: View {
     let spy: () -> Void
     var body: some View {
@@ -95,7 +90,6 @@ private struct NavigationRootTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 private struct TabTestView: View {
     @State private var selection = 0
     let spy: () -> Void
@@ -110,7 +104,6 @@ private struct TabTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 private struct TabRootTestView: View {
     @State private var selection = 0
     let spy: () -> Void
@@ -125,8 +118,7 @@ private struct TabRootTestView: View {
     }
 }
 
-@available(iOS 14.0, tvOS 14.0, watchOS 7.0, *)
-@available(macOS, unavailable)
+@available(iOS 14, tvOS 14, *)
 private struct PageTabViewStyleTestView: View {
 
     let spy: (UICollectionView, UIScrollView) -> Void
@@ -143,7 +135,6 @@ private struct PageTabViewStyleTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 private struct ListTestView: View {
     
     let spy1: () -> Void
@@ -152,27 +143,47 @@ private struct ListTestView: View {
     let spyCell2: () -> Void
 
     var body: some View {
-        List {
-            Text("Item 1")
-            Text("Item 2")
-                .introspectTableView { tableView in
-                    self.spy2()
-                }
-                .introspectTableViewCell { cell in
-                    self.spyCell2()
-                }
-            
-        }
-        .introspectTableView { tableView in
-            self.spy1()
-        }
-        .introspectTableViewCell { cell in
-            self.spyCell1()
+        if #available(iOS 16, tvOS 16, *) {
+            List {
+                Text("Item 1")
+                Text("Item 2")
+                    .introspectCollectionView { tableView in
+                        self.spy2()
+                    }
+                    .introspectCollectionViewCell { cell in
+                        self.spyCell2()
+                    }
+
+            }
+            .introspectCollectionView { tableView in
+                self.spy1()
+            }
+            .introspectCollectionViewCell { cell in
+                self.spyCell1()
+            }
+        } else {
+            List {
+                Text("Item 1")
+                Text("Item 2")
+                    .introspectTableView { tableView in
+                        self.spy2()
+                    }
+                    .introspectTableViewCell { cell in
+                        self.spyCell2()
+                    }
+
+            }
+            .introspectTableView { tableView in
+                self.spy1()
+            }
+            .introspectTableViewCell { cell in
+                self.spyCell1()
+            }
         }
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
+
 private struct ScrollTestView: View {
     
     let spy1: (UIScrollView) -> Void
@@ -196,7 +207,6 @@ private struct ScrollTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 private struct NestedScrollTestView: View {
 
     let spy1: (UIScrollView) -> Void
@@ -221,7 +231,32 @@ private struct NestedScrollTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
+private struct MaskedScrollTestView: View {
+    
+    let spy1: (UIScrollView) -> Void
+    let spy2: (UIScrollView) -> Void
+    
+    var body: some View {
+        HStack {
+            ScrollView {
+                Text("Item 1")
+            }
+            .introspectScrollView { scrollView in
+                self.spy1(scrollView)
+            }
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 20.0))
+            .cornerRadius(2.0)
+            ScrollView {
+                Text("Item 1")
+                .introspectScrollView { scrollView in
+                    self.spy2(scrollView)
+                }
+            }
+        }
+    }
+}
+
 private struct TextFieldTestView: View {
     let spy1: (UITextField) -> Void
     let spy2: (UITextField) -> Void
@@ -252,7 +287,7 @@ private struct TextFieldTestView: View {
     }
 }
 
-@available(iOS 14.0, macCatalyst 14.0, macOS 11.0, tvOS 13.0, *)
+@available(iOS 14, *)
 @available(tvOS, unavailable, message: "TextEditor is not available in tvOS.")
 private struct TextEditorTestView: View {
     let spy: () -> Void
@@ -265,7 +300,6 @@ private struct TextEditorTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 @available(tvOS, unavailable)
 private struct ToggleTestView: View {
     let spy: () -> Void
@@ -278,7 +312,6 @@ private struct ToggleTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 @available(tvOS, unavailable)
 private struct SliderTestView: View {
     let spy: () -> Void
@@ -291,7 +324,6 @@ private struct SliderTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 @available(tvOS, unavailable)
 private struct StepperTestView: View {
     let spy: () -> Void
@@ -305,7 +337,6 @@ private struct StepperTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 @available(tvOS, unavailable)
 private struct DatePickerTestView: View {
     let spy: () -> Void
@@ -320,7 +351,6 @@ private struct DatePickerTestView: View {
     }
 }
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
 private struct SegmentedControlTestView: View {
     @State private var pickerValue = 0
     let spy: () -> Void
@@ -337,12 +367,13 @@ private struct SegmentedControlTestView: View {
     }
 }
 
-@available(iOS 14.0, tvOS 13.0, macOS 11.0, *)
+#if os(iOS)
+@available(iOS 14.0, *)
 @available(tvOS, unavailable)
 private struct ColorWellTestView: View {
     @State private var color = Color.black
     let spy: () -> Void
-    
+
     var body: some View {
         ColorPicker("Picker", selection: $color)
         .introspectColorWell { colorWell in
@@ -350,8 +381,22 @@ private struct ColorWellTestView: View {
         }
     }
 }
+#endif
 
-@available(iOS 13.0, tvOS 13.0, macOS 10.15.0, *)
+import MapKit
+@available(iOS 14, tvOS 14, *)
+private struct MapTestView: View {
+    @State private var coordinateRegion = MKCoordinateRegion(.world)
+    let spy: () -> Void
+
+    var body: some View {
+        Map(coordinateRegion: $coordinateRegion)
+            .introspectMapView { mapView in
+                self.spy()
+            }
+    }
+}
+
 class UIKitTests: XCTestCase {
     func testNavigation() {
         
@@ -394,7 +439,10 @@ class UIKitTests: XCTestCase {
     }
     
     func testList() {
-        
+        if #available(tvOS 16, *) {
+            return // TODO: verify whether List still uses NSTableView under the hood in tvOS 16
+        }
+
         let expectation1 = XCTestExpectation()
         let expectation2 = XCTestExpectation()
         let cellExpectation1 = XCTestExpectation()
@@ -463,6 +511,34 @@ class UIKitTests: XCTestCase {
 
         XCTAssertNotEqual(unwrappedScrollView1, unwrappedScrollView2)
     }
+    
+    func testMaskedScrollView() throws {
+        
+        let expectation1 = XCTestExpectation()
+        let expectation2 = XCTestExpectation()
+
+        var scrollView1: UIScrollView?
+        var scrollView2: UIScrollView?
+
+        let view = MaskedScrollTestView(
+            spy1: { scrollView in
+                scrollView1 = scrollView
+                expectation1.fulfill()
+            },
+            spy2: { scrollView in
+                scrollView2 = scrollView
+                expectation2.fulfill()
+            }
+        )
+        
+        TestUtils.present(view: view)
+        wait(for: [expectation1, expectation2], timeout: TestUtils.Constants.timeout)
+
+        let unwrappedScrollView1 = try XCTUnwrap(scrollView1)
+        let unwrappedScrollView2 = try XCTUnwrap(scrollView2)
+
+        XCTAssertNotEqual(unwrappedScrollView1, unwrappedScrollView2)
+    }
 
     func testTextField() throws {
         
@@ -509,18 +585,7 @@ class UIKitTests: XCTestCase {
         TestUtils.present(view: view)
         wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
-    
-    #if os(iOS)
-    func testSplitNavigation() {
-        
-        let expectation = XCTestExpectation()
-        let view = SplitNavigationTestView(spy: {
-            expectation.fulfill()
-        })
-        TestUtils.present(view: view)
-        wait(for: [expectation], timeout: TestUtils.Constants.timeout)
-    }
-    
+
     func testRootNavigation() {
         
         let expectation = XCTestExpectation()
@@ -530,7 +595,18 @@ class UIKitTests: XCTestCase {
         TestUtils.present(view: view)
         wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
-    
+
+    #if !os(tvOS)
+    func testSplitNavigation() {
+
+        let expectation = XCTestExpectation()
+        let view = SplitNavigationTestView(spy: {
+            expectation.fulfill()
+        })
+        TestUtils.present(view: view)
+        wait(for: [expectation], timeout: TestUtils.Constants.timeout)
+    }
+
     func testToggle() {
         
         let expectation = XCTestExpectation()
@@ -540,7 +616,7 @@ class UIKitTests: XCTestCase {
         TestUtils.present(view: view)
         wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
-    
+
     func testSlider() {
         
         let expectation = XCTestExpectation()
@@ -550,7 +626,7 @@ class UIKitTests: XCTestCase {
         TestUtils.present(view: view)
         wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
-    
+
     func testStepper() {
         
         let expectation = XCTestExpectation()
@@ -560,7 +636,7 @@ class UIKitTests: XCTestCase {
         TestUtils.present(view: view)
         wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
-    
+
     func testDatePicker() {
         
         let expectation = XCTestExpectation()
@@ -571,8 +647,7 @@ class UIKitTests: XCTestCase {
         wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
     
-    @available(iOS 14.0, macCatalyst 14.0, macOS 11.0, *)
-    @available(tvOS, unavailable, message: "TextEditor is not available in tvOS.")
+    @available(iOS 14, *)
     func testTextEditor() {
 
         let expectation = XCTestExpectation()
@@ -583,8 +658,7 @@ class UIKitTests: XCTestCase {
         wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
     
-    @available(iOS 14.0, macCatalyst 14.0, macOS 11.0, *)
-    @available(tvOS, unavailable, message: "ColorPicker is not available in tvOS.")
+    @available(iOS 14, *)
     func testColorPicker() {
 
         let expectation = XCTestExpectation()
@@ -595,7 +669,7 @@ class UIKitTests: XCTestCase {
         wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
 
-    @available(iOS 14.0, tvOS 14.0, watchOS 7.0, *)
+    @available(iOS 14, tvOS 14, *)
     func testPagedTabView() throws {
 
         var collectionView1: UICollectionView?
@@ -613,8 +687,53 @@ class UIKitTests: XCTestCase {
         let unwrappedCollectionView = try XCTUnwrap(collectionView1)
         let unwrappedScrollView = try XCTUnwrap(scrollView1)
 
-        XCTAssertTrue(unwrappedCollectionView.subviews.contains(where: { $0 === unwrappedScrollView }))
+        if #available(iOS 16, tvOS 16, *) {
+            XCTAssertTrue(unwrappedCollectionView == unwrappedScrollView)
+        } else {
+            XCTAssertTrue(unwrappedCollectionView.subviews.contains(where: { $0 === unwrappedScrollView }))
+        }
+    }
+
+    @available(tvOS, unavailable)
+    func testSearchController() {
+        guard #available(iOS 15, *) else {
+            return
+        }
+        struct SearchControllerTestView: View {
+            @State var searchText = ""
+            let spy: () -> Void
+
+            var body: some View {
+                NavigationView {
+                    EmptyView()
+                        .searchable(text: $searchText)
+                        .introspectSearchController { searchController in
+                            self.spy()
+                        }
+                }
+                .introspectSplitViewController { splitViewController in
+                    splitViewController.preferredDisplayMode = .oneOverSecondary
+                }
+            }
+        }
+
+        let expectation = XCTestExpectation()
+        let view = SearchControllerTestView(spy: {
+            expectation.fulfill()
+        })
+        TestUtils.present(view: view)
+        wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
     #endif
+    
+    @available(iOS 14, tvOS 14, *)
+    func testMapView() {
+        let expectation = XCTestExpectation()
+        let view = MapTestView(spy: {
+            expectation.fulfill()
+        })
+        TestUtils.present(view: view)
+        wait(for: [expectation], timeout: TestUtils.Constants.timeout)
+    }
 }
 #endif

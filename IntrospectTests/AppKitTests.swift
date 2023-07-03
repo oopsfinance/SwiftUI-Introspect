@@ -4,7 +4,6 @@ import XCTest
 import SwiftUI
 @testable import Introspect
 
-@available(macOS 10.15.0, *)
 enum TestUtils {
     enum Constants {
         static let timeout: TimeInterval = 5
@@ -24,7 +23,20 @@ enum TestUtils {
     }
 }
 
-@available(macOS 10.15.0, *)
+private struct SplitNavigationTestView: View {
+    let spy: () -> Void
+    var body: some View {
+        NavigationView {
+            VStack {
+                EmptyView()
+            }
+        }
+        .introspectSplitView { splitView in
+            self.spy()
+        }
+    }
+}
+
 private struct ListTestView: View {
     
     let spy1: () -> Void
@@ -53,7 +65,6 @@ private struct ListTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
 private struct ScrollTestView: View {
     
     let spy1: (NSScrollView) -> Void
@@ -78,7 +89,6 @@ private struct ScrollTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
 private struct NestedScrollTestView: View {
 
     let spy1: (NSScrollView) -> Void
@@ -103,7 +113,32 @@ private struct NestedScrollTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
+private struct MaskedScrollTestView: View {
+    
+    let spy1: (NSScrollView) -> Void
+    let spy2: (NSScrollView) -> Void
+    
+    var body: some View {
+        HStack {
+            ScrollView {
+                Text("Item 1")
+            }
+            .introspectScrollView { scrollView in
+                self.spy1(scrollView)
+            }
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 20.0))
+            .cornerRadius(2.0)
+            ScrollView {
+                Text("Item 1")
+                .introspectScrollView { scrollView in
+                    self.spy2(scrollView)
+                }
+            }
+        }
+    }
+}
+
 private struct TextFieldTestView: View {
     let spy: () -> Void
     @State private var textFieldValue = ""
@@ -115,7 +150,7 @@ private struct TextFieldTestView: View {
     }
 }
 
-@available(macOS 11.0, *)
+@available(macOS 11, *)
 private struct TextEditorTestView: View {
     let spy: () -> Void
     @State private var textEditorValue = ""
@@ -127,7 +162,6 @@ private struct TextEditorTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
 private struct SliderTestView: View {
     let spy: () -> Void
     @State private var sliderValue = 0.0
@@ -139,7 +173,6 @@ private struct SliderTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
 private struct StepperTestView: View {
     let spy: () -> Void
     var body: some View {
@@ -152,7 +185,6 @@ private struct StepperTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
 private struct DatePickerTestView: View {
     let spy: () -> Void
     @State private var datePickerValue = Date()
@@ -166,7 +198,6 @@ private struct DatePickerTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
 private struct SegmentedControlTestView: View {
     @State private var pickerValue = 0
     let spy: () -> Void
@@ -183,7 +214,6 @@ private struct SegmentedControlTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
 private struct TabViewTestView: View {
     let spy: () -> Void
     var body: some View {
@@ -203,7 +233,6 @@ private struct TabViewTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
 private struct ButtonTestView: View {
     let spy: () -> Void
     var body: some View {
@@ -214,7 +243,6 @@ private struct ButtonTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
 private struct ToggleTestView: View {
     let spy: () -> Void
     @State private var toggleValue = false
@@ -226,7 +254,7 @@ private struct ToggleTestView: View {
     }
 }
 
-@available(macOS 11.0, *)
+@available(macOS 11, *)
 private struct ColorWellTestView: View {
     @State private var color = Color.black
     let spy: () -> Void
@@ -239,10 +267,37 @@ private struct ColorWellTestView: View {
     }
 }
 
-@available(macOS 10.15.0, *)
+import MapKit
+@available(macOS 11, *)
+private struct MapTestView: View {
+    @State private var coordinateRegion = MKCoordinateRegion(.world)
+    let spy: () -> Void
+
+    var body: some View {
+        Map(coordinateRegion: $coordinateRegion)
+            .introspectMapView { mapView in
+                self.spy()
+            }
+    }
+}
+
 class AppKitTests: XCTestCase {
-    
+
+    func testSplitNavigation() {
+
+        let expectation = XCTestExpectation()
+        let view = SplitNavigationTestView(spy: {
+            expectation.fulfill()
+        })
+        TestUtils.present(view: view)
+        wait(for: [expectation], timeout: TestUtils.Constants.timeout)
+    }
+
     func testList() {
+        if #available(macOS 11, *) {
+            return // TODO: verify whether List still uses NSTableView under the hood in macOS >=11
+        }
+
         let expectation1 = XCTestExpectation()
         let expectation2 = XCTestExpectation()
         let cellExpectation1 = XCTestExpectation()
@@ -285,7 +340,6 @@ class AppKitTests: XCTestCase {
     }
 
     func testNestedScrollView() throws {
-
         let expectation1 = XCTestExpectation()
         let expectation2 = XCTestExpectation()
 
@@ -310,6 +364,33 @@ class AppKitTests: XCTestCase {
 
         XCTAssertNotEqual(unwrappedScrollView1, unwrappedScrollView2)
     }
+    
+    func testMaskedScrollView() throws {
+        let expectation1 = XCTestExpectation()
+        let expectation2 = XCTestExpectation()
+
+        var scrollView1: NSScrollView?
+        var scrollView2: NSScrollView?
+
+        let view = MaskedScrollTestView(
+            spy1: { scrollView in
+                scrollView1 = scrollView
+                expectation1.fulfill()
+            },
+            spy2: { scrollView in
+                scrollView2 = scrollView
+                expectation2.fulfill()
+            }
+        )
+        
+        TestUtils.present(view: view)
+        wait(for: [expectation1, expectation2], timeout: TestUtils.Constants.timeout)
+
+        let unwrappedScrollView1 = try XCTUnwrap(scrollView1)
+        let unwrappedScrollView2 = try XCTUnwrap(scrollView2)
+
+        XCTAssertNotEqual(unwrappedScrollView1, unwrappedScrollView2)
+    }
 
     func testTextField() {
         
@@ -320,17 +401,14 @@ class AppKitTests: XCTestCase {
         TestUtils.present(view: view)
         wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
-    
-    func testTextEditor() {
 
-        if #available(macOS 11.0, *) {
-            let expectation = XCTestExpectation()
-            let view = TextEditorTestView(spy: {
-                expectation.fulfill()
-            })
-            TestUtils.present(view: view)
-            wait(for: [expectation], timeout: TestUtils.Constants.timeout)
-        }
+    func testTextEditor() {
+        let expectation = XCTestExpectation()
+        let view = TextEditorTestView(spy: {
+            expectation.fulfill()
+        })
+        TestUtils.present(view: view)
+        wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
     
     func testSlider() {
@@ -382,9 +460,12 @@ class AppKitTests: XCTestCase {
         TestUtils.present(view: view)
         wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
-    
+
     func testButton() {
-        
+
+        if #available(macOS 12, *) {
+            return // TODO: verify whether Button still uses NSButton under the hood in macOS >=12
+        }
         let expectation = XCTestExpectation()
         let view = ButtonTestView(spy: {
             expectation.fulfill()
@@ -405,14 +486,21 @@ class AppKitTests: XCTestCase {
     
     func testColorPicker() {
 
-        if #available(macOS 11.0, *) {
-            let expectation = XCTestExpectation()
-            let view = ColorWellTestView(spy: {
-                expectation.fulfill()
-            })
-            TestUtils.present(view: view)
-            wait(for: [expectation], timeout: TestUtils.Constants.timeout)
-        }
+        let expectation = XCTestExpectation()
+        let view = ColorWellTestView(spy: {
+            expectation.fulfill()
+        })
+        TestUtils.present(view: view)
+        wait(for: [expectation], timeout: TestUtils.Constants.timeout)
+    }
+
+    func testMapView() {
+        let expectation = XCTestExpectation()
+        let view = MapTestView(spy: {
+            expectation.fulfill()
+        })
+        TestUtils.present(view: view)
+        wait(for: [expectation], timeout: TestUtils.Constants.timeout)
     }
 }
 #endif
